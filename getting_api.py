@@ -1,15 +1,18 @@
 import requests
 import pandas as pd
 
-#Liste des indicateurs et noms lisibles
+# Liste des indicateurs et noms lisibles
 indicators = {
-    "NY.GDP.MKTP.CD": "GDP",  # PIB
-    "SP.POP.TOTL": "Population",  # Population
-    "EN.GHG.CO2.MT.CE.AR5": "CO2"  # Emissions CO2
+    "SP.POP.1564.TO.ZS": "Population 15-64 ans (%)",
+    "NY.GDP.MKTP.KD.ZG": "Croissance PIB (%)",
+    "SL.TLF.CACT.FE.ZS": "Taux Activité Femmes (%)",
+    "SP.POP.TOTL.FE.ZS": "Population Femmes (%)",
+    "SP.URB.TOTL.IN.ZS": "Population Urbaine (%)",
+    "NY.GDP.MKTP.CD": "GDP (USD)",
+    "SP.POP.TOTL": "Population Totale"
 }
 
-
-#Fonction pour récupérer les données d'un indicateur
+# Fonction pour récupérer les données d'un indicateur
 def get_indicator_data(indicator_code, start_year=1896, end_year=2022):
     url = f"http://api.worldbank.org/v2/country/all/indicator/{indicator_code}?date={start_year}:{end_year}&format=json&per_page=20000"
     response = requests.get(url)
@@ -24,15 +27,18 @@ def get_indicator_data(indicator_code, start_year=1896, end_year=2022):
 
     # Conversion en DataFrame
     df = pd.json_normalize(records)
-    df = df[['country.id', 'country.value', 'date', 'value']]
+
+    # On récupère bien le code ISO3 ici
+    df = df[['countryiso3code', 'country.value', 'date', 'value']]
     df.columns = ['ISO3Code', 'Country Name', 'Year', indicator_code]
     df['Year'] = df['Year'].astype(int)
 
     return df
 
 
-#Récupération et fusion des indicateurs
+# Récupération et fusion des indicateurs
 dfs = []
+
 for code in indicators.keys():
     df = get_indicator_data(code, start_year=1896, end_year=2022)
     if not df.empty:
@@ -42,20 +48,25 @@ for code in indicators.keys():
 if dfs:
     merged_df = dfs[0]
     for df in dfs[1:]:
-        merged_df = pd.merge(merged_df, df, on=['ISO3Code', 'Country Name', 'Year'], how='outer')
+        merged_df = pd.merge(
+            merged_df,
+            df,
+            on=['ISO3Code', 'Country Name', 'Year'],
+            how='outer'
+        )
 
     # Renommer les colonnes avec les noms lisibles
     merged_df.rename(columns=indicators, inplace=True)
 
-    # Tri par pays et année
+    # Tri final
     merged_df.sort_values(by=['Country Name', 'Year'], inplace=True)
 
-    # Affichage du résultat
     print(merged_df.head())
 else:
     merged_df = pd.DataFrame()
     print("Aucune donnée récupérée.")
-merged_df.to_csv("worldbank_indicators.csv", index=False)
 
-git config --global user.name "Chaimaa Maach"
-git config --global user.email "maachechaimaa@gmail.com"
+
+# Export CSV
+merged_df.to_csv("worldbank_indic.csv", index=False)
+
