@@ -1,4 +1,5 @@
 # Analyse de corrélation Jeux Olympiques & Performance Socio‑Économique
+<img width="1536" height="1024" alt="ChatGPT Image 6 déc  2025, 21_29_09" src="https://github.com/user-attachments/assets/c141e131-6eba-487c-a6c5-e345de724944" />
 
 
 ## Introduction
